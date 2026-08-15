@@ -1,16 +1,16 @@
 ---
-description: Create a worktree + tmux window + Claude (or Gemini) session primed with a PR's description
-argument-hint: <pr-number> [--gemini]
+description: Create a worktree + tmux window + Pi (or Claude/Gemini) session primed with a PR's description
+argument-hint: <pr-number> [--claude|--gemini]
 ---
 
-Set up an isolated worktree and launch a Claude (or Gemini if --gemini is specified) session primed with the full PR description for PR $ARGUMENTS.
+Set up an isolated worktree and launch a Pi (Claude if --claude, Gemini if --gemini) session primed with the full PR description for PR $ARGUMENTS.
 
 ## Steps
 
 **1. Check prerequisites and prepare worktree**
 
 ```bash
-if [ -z "$ARGUMENTS" ]; then echo "Usage: /continue-pr <pr-number> [--gemini]"; exit 1; fi
+if [ -z "$ARGUMENTS" ]; then echo "Usage: /continue-pr <pr-number> [--claude|--gemini]"; exit 1; fi
 
 bin/worktree prepare "$1" --pr
 ```

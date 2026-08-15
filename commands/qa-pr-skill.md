@@ -123,8 +123,12 @@ remote_control=$(jq -r '.remote_control' "$wt_path/.worktree-session.json")
 Launch a fresh Claude session in the PR worktree via the harness, using the written prompt file:
 
 ```bash
-bin/worktree harness <number> --prompt-file /tmp/qa-skill-<number>-prompt.txt --fresh --window qa-skill-<number>
+bin/worktree harness <number> --claude --prompt-file /tmp/qa-skill-<number>-prompt.txt --fresh --window qa-skill-<number>
 ```
+
+`--claude` is required even though Pi is the default harness: the skills under
+test are Claude Code skills (`.claude/commands/`), so the verification session
+must be a Claude session.
 
 **6. Tell the operator**
 

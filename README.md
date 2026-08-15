@@ -14,8 +14,8 @@ All skills are namespaced as `/cpb:<name>`.
 
 | Skill | Purpose |
 |---|---|
-| `/cpb:start-pr <n>` | Create worktree + plan-mode Claude session for a GitHub issue |
-| `/cpb:continue-pr <n>` | Create worktree + Claude session for an open PR |
+| `/cpb:start-pr <n>` | Create worktree + plan-mode Pi session for a GitHub issue |
+| `/cpb:continue-pr <n>` | Create worktree + Pi session for an open PR |
 | `/cpb:finish-pr [n]` | CI gate → squash-merge → worktree teardown |
 | `/cpb:qa-pr [n]` | Router: detect PR mode, delegate to sub-commands, finish on pass |
 | `/cpb:qa-pr-skill <n>` | Skill-contribution walkthrough via automated Claude session |
@@ -150,10 +150,14 @@ wt_path=$(echo "$session" | jq -r '.worktree_path')
 
 | Flag | Default | Description |
 |---|---|---|
-| `--prompt-file <path>` | `<wt_path>/pr_context.md` | Prompt file to pass to Claude/Gemini |
+| `--prompt-file <path>` | `<wt_path>/pr_context.md` | Prompt file to pass to the agent |
 | `--window <name>` | `session["tmux_window"]` | Override the tmux window name |
 | `--fresh` | false | Kill any existing window with that name before creating a new one |
-| `--gemini` | false | Launch Gemini instead of Claude |
+| `--pi` | (default) | Launch Pi (the default harness) |
+| `--claude` | false | Launch Claude instead of Pi |
+| `--gemini` | false | Launch Gemini instead of Pi |
+
+Pi launches with `--plan` for issues (read-only plan mode), which requires the plan-mode extension that ships with pi's examples: copy `examples/extensions/plan-mode/` from the pi npm package into `~/.pi/agent/extensions/` (auto-discovered globally). PRs launch without `--plan`.
 
 The launcher script avoids quoting breakage: instead of inlining the prompt through `tmux send-keys` (which can break on backticks, newlines, and quotes), the full command is written to a bash script and only `bash /tmp/harness-<rc>.sh` is sent through tmux.
 
@@ -174,7 +178,9 @@ All session-launching skills (`start-pr`, `continue-pr`, `research-pr`, `qa-pr-s
    | `--prompt-file <path>` | `<worktree>/pr_context.md` | Prompt file to feed to the agent |
    | `--window <name>` | Session's `tmux_window` | Override the tmux window name |
    | `--fresh` | (reuse existing) | Kill any existing window with the target name, then create a clean one |
-   | `--gemini` | (use Claude) | Launch Gemini instead of Claude |
+   | `--pi` | (default) | Launch Pi (the default harness) |
+   | `--claude` | (use Pi) | Launch Claude instead of Pi |
+   | `--gemini` | (use Pi) | Launch Gemini instead of Pi |
 
    The launcher-script mechanism (`/tmp/harness-<rc>.sh`) avoids the shell re-parsing that occurs when long prompts are inlined through `tmux send-keys`. Prompts containing backticks, newlines, or quotes are handled correctly.
 

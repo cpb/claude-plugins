@@ -1,16 +1,16 @@
 ---
-description: Open a worktree + tmux window with Claude (or Gemini) in plan mode to tackle a GitHub issue
-argument-hint: <issue-number> [--gemini]
+description: Open a worktree + tmux window with Pi (or Claude/Gemini) in plan mode to tackle a GitHub issue
+argument-hint: <issue-number> [--claude|--gemini]
 ---
 
-Set up an isolated worktree and launch Claude (or Gemini if --gemini is specified) in plan mode, primed with the full issue description, for issue $ARGUMENTS.
+Set up an isolated worktree and launch Pi (Claude if --claude, Gemini if --gemini) in plan mode, primed with the full issue description, for issue $ARGUMENTS.
 
 ## Steps
 
 **1. Prepare the worktree**
 
 ```bash
-if [ -z "$ARGUMENTS" ]; then echo "Usage: /start-pr <issue-number> [--gemini]"; exit 1; fi
+if [ -z "$ARGUMENTS" ]; then echo "Usage: /start-pr <issue-number> [--claude|--gemini]"; exit 1; fi
 
 bin/worktree prepare "$1" --issue
 ```

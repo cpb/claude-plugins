@@ -213,10 +213,6 @@ def cmd_prepare(args)
   is_pr = args.delete("--pr")
   is_issue = args.delete("--issue")
   test_first_arg = args.delete("--test-first")
-  append_context_file = if (idx = args.index("--append-context-file"))
-    args.delete_at(idx)
-    args.delete_at(idx)
-  end
 
   type = is_pr ? "pr" : (is_issue ? "issue" : nil)
 
@@ -284,10 +280,6 @@ def cmd_prepare(args)
   File.write(File.join(wt_path, ".worktree-session.json"), JSON.pretty_generate(session))
   File.write(File.join(wt_path, "pr_context.md"), build_pr_context(type, info, test_first: test_first))
 
-  if append_context_file && File.exist?(append_context_file)
-    File.open(File.join(wt_path, "pr_context.md"), "a") { |f| f.write(File.read(append_context_file)) }
-  end
-
   puts JSON.pretty_generate(session.merge(info: info))
 end
 
@@ -306,7 +298,9 @@ def cmd_harness(args)
     window_name_override = args.delete_at(idx)
   end
 
+  use_claude = args.delete("--claude")
   use_gemini = args.delete("--gemini")
+  args.delete("--pi") # pi is the default harness; flag accepted for explicitness
   fresh_window = args.delete("--fresh")
 
   id = args.shift
@@ -332,7 +326,7 @@ def cmd_harness(args)
     id = session["number"] if session
   end
 
-  abort "Usage: bin/worktree harness [id] [--prompt-file <path>] [--window <name>] [--fresh] [--gemini]" unless session
+  abort "Usage: bin/worktree harness [id] [--prompt-file <path>] [--window <name>] [--fresh] [--pi|--claude|--gemini]" unless session
 
   wt_path        = session["worktree_path"]
   tmux_target    = session["tmux_target"] || session["tmux_window"]
@@ -364,13 +358,21 @@ def cmd_harness(args)
 
   # Write launcher script — avoids shell-quoting layers when passing prompt through tmux send-keys
   launcher = "/tmp/harness-#{remote_control}.sh"
-  if use_gemini
+  if use_claude
+    cmd_str = "exec claude --remote-control #{Shellwords.escape(remote_control)}"
+    cmd_str += " --permission-mode plan" if type == "issue"
+    cmd_str += " \"$(< #{Shellwords.escape(prompt_file)})\""
+  elsif use_gemini
     cmd_str = "exec gemini --skip-trust"
     cmd_str += " --approval-mode plan" if type == "issue"
     cmd_str += " --prompt-interactive \"$(< #{Shellwords.escape(prompt_file)})\""
   else
-    cmd_str = "exec claude --remote-control #{Shellwords.escape(remote_control)}"
-    cmd_str += " --permission-mode plan" if type == "issue"
+    # NOTE: --plan must come before --name — pi's arg parser treats the token
+    # after an unknown/boolean flag as its value, so "--plan <prompt>" would
+    # swallow the prompt file contents.
+    cmd_str = "exec pi"
+    cmd_str += " --plan" if type == "issue"
+    cmd_str += " --name #{Shellwords.escape(remote_control)}"
     cmd_str += " \"$(< #{Shellwords.escape(prompt_file)})\""
   end
   File.write(launcher, "#!/usr/bin/env bash\n#{cmd_str}\n")
@@ -845,8 +847,8 @@ USAGE = <<~USAGE
   Subcommands:
     prepare <id> [--pr|--issue] [--test-first]
                               Fetch GH info, create worktree, output JSON
-    harness [id] [--prompt-file <path>] [--window <name>] [--fresh] [--gemini]
-                              Find/create tmux window and launch Claude (or Gemini) via launcher script
+    harness [id] [--prompt-file <path>] [--window <name>] [--fresh] [--pi|--claude|--gemini]
+                              Find/create tmux window and launch Pi (default), Claude, or Gemini via launcher script
     check-hill [number]       Wait for CI and report status for hill PRs
     cleanup <id>              Wait for CI, merge PR, and tear down worktree/window
     add [--parent <p>] <branch> [path]

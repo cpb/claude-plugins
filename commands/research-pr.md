@@ -1,9 +1,9 @@
 ---
 description: Prime a worktree for a research-and-planning session; spawn parallel research agents, gate plan agents on their output, and open a draft PR of terrain-map documents
-argument-hint: <issue-number> [--gemini]
+argument-hint: <issue-number> [--claude|--gemini]
 ---
 
-Set up an isolated worktree for issue $ARGUMENTS and launch Claude (or Gemini if --gemini is specified) in plan mode, primed with the issue description and a research-and-planning brief that instructs the orchestrator to fan out parallel research agents, gate plan agents on their output, and open a draft PR of hierarchical markdown artifacts.
+Set up an isolated worktree for issue $ARGUMENTS and launch Pi (Claude if --claude, Gemini if --gemini) in plan mode, primed with the issue description and a research-and-planning brief that instructs the orchestrator to fan out parallel research agents, gate plan agents on their output, and open a draft PR of hierarchical markdown artifacts.
 
 ## Steps
 
@@ -11,7 +11,7 @@ Set up an isolated worktree for issue $ARGUMENTS and launch Claude (or Gemini if
 
 ```bash
 if [ -z "$ARGUMENTS" ]; then
-  echo "Usage: /research-pr <issue-number> [--gemini]"
+  echo "Usage: /research-pr <issue-number> [--claude|--gemini]"
   exit 1
 fi
 ```
@@ -150,7 +150,7 @@ Print:
 - [ ] Running `/research-pr <n>` creates a worktree for issue `<n>`
 - [ ] `pr_context.md` in the worktree contains the heading `## Research-and-Planning Protocol`
 - [ ] `.worktree-session.json` in the worktree has `"type": "issue"` (confirming plan-mode launch)
-- [ ] A tmux window named `issue-<n>` is open with a Claude session running
+- [ ] A tmux window named `issue-<n>` is open with a Pi session running
 - [ ] (inspect only) Skill file defines the hierarchical folder structure `docs/<issue>-<slug>/research/` and `docs/<issue>-<slug>/plans/`
 - [ ] (inspect only) Skill file instructs research agents to use `isolation: "worktree"` and `run_in_background: true`
 - [ ] (inspect only) Skill file gates plan agents on all research agents completing (step 6 follows step 4 collect)
