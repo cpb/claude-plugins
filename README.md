@@ -157,7 +157,7 @@ wt_path=$(echo "$session" | jq -r '.worktree_path')
 | `--claude` | false | Launch Claude instead of Pi |
 | `--gemini` | false | Launch Gemini instead of Pi |
 
-Pi launches with `--plan` for issues (read-only plan mode), which requires the plan-mode extension that ships with pi's examples: copy `examples/extensions/plan-mode/` from the pi npm package into `~/.pi/agent/extensions/` (auto-discovered globally). PRs launch without `--plan`.
+Pi has no plan-mode flag, so for issues it launches with `--exclude-tools edit,write` — pi's mutating built-in tools are exactly `edit` and `write`, so excluding them is the equivalent of Claude's `--permission-mode plan` (Gemini uses `--approval-mode plan`). PR sessions launch without plan mode.
 
 The launcher script avoids quoting breakage: instead of inlining the prompt through `tmux send-keys` (which can break on backticks, newlines, and quotes), the full command is written to a bash script and only `bash /tmp/harness-<rc>.sh` is sent through tmux.
 
