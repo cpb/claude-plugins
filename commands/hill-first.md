@@ -1,6 +1,6 @@
 ---
 description: Write failing tests per layer, open draft PR for human hill review
-argument-hint: <name>: "<spec>", <name2>: "<spec2>", ...
+argument-hint: '<name>: "<spec>", <name2>: "<spec2>", ...'
 ---
 
 Orchestrate an outside-in test hill: create one worktree per test layer, spawn parallel subagents to write a single failing test each, merge the results, and open a draft PR for human review.
