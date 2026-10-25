@@ -291,6 +291,18 @@ def cmd_prepare(args)
   puts JSON.pretty_generate(session.merge(info: info))
 end
 
+# pi has no built-in plan mode: the plan-mode extension registers a --plan
+# flag (read-only bash allowlist + plan approval flow). Without the extension,
+# --plan is an unknown flag and pi's arg parser would swallow the prompt as
+# its value — so fall back to excluding pi's mutating built-in tools (edit and
+# write), which is the plan-mode equivalent of claude's --permission-mode plan.
+def pi_plan_mode_args
+  @pi_plan_mode_args ||= begin
+    help, status = Open3.capture2("pi --help")
+    status.success? && help =~ /^\s+--plan\s/ ? "--plan" : "--exclude-tools edit,write"
+  end
+end
+
 def cmd_harness(args)
   check_tmux
 
@@ -375,11 +387,9 @@ def cmd_harness(args)
     cmd_str += " --approval-mode plan" if type == "issue"
     cmd_str += " --prompt-interactive \"$(< #{Shellwords.escape(prompt_file)})\""
   else
-    # pi has no plan-mode flag and no --remote-control: its mutating built-in
-    # tools are exactly edit and write, so excluding them is the equivalent of
-    # claude's --permission-mode plan. remote_control stays for claude launches.
+    # pi has no --remote-control flag; remote_control stays for claude launches.
     cmd_str = "exec pi"
-    cmd_str += " --exclude-tools edit,write" if type == "issue"
+    cmd_str += " #{pi_plan_mode_args}" if type == "issue"
     cmd_str += " \"$(< #{Shellwords.escape(prompt_file)})\""
   end
   File.write(launcher, "#!/usr/bin/env bash\n#{cmd_str}\n")
@@ -857,8 +867,8 @@ USAGE = <<~USAGE
     harness [id] [--prompt-file <path>] [--window <name>] [--fresh] [--pi|--claude|--gemini]
                               Find/create tmux window and launch Pi (default), Claude (--claude),
                               or Gemini (--gemini) via launcher script; issue sessions launch in
-                              plan mode (pi: --exclude-tools edit,write; claude: --permission-mode
-                              plan; gemini: --approval-mode plan)
+                              plan mode (pi: --plan via plan-mode extension, else --exclude-tools
+                              edit,write; claude: --permission-mode plan; gemini: --approval-mode plan)
     check-hill [number]       Wait for CI and report status for hill PRs
     cleanup <id>              Wait for CI, merge PR, and tear down worktree/window
     add [--parent <p>] <branch> [path]
