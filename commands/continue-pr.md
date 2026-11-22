@@ -1,6 +1,6 @@
 ---
 description: Create a worktree + tmux window + Pi (or Claude/Gemini) session primed with a PR's description
-argument-hint: <pr-number> [--claude|--gemini]
+argument-hint: <pr-number> [--pi|--claude|--gemini]
 ---
 
 Set up an isolated worktree and launch a Pi (Claude if --claude, Gemini if --gemini) session primed with the full PR description for PR $ARGUMENTS.
@@ -10,7 +10,7 @@ Set up an isolated worktree and launch a Pi (Claude if --claude, Gemini if --gem
 **1. Check prerequisites and prepare worktree**
 
 ```bash
-if [ -z "$ARGUMENTS" ]; then echo "Usage: /continue-pr <pr-number> [--claude|--gemini]"; exit 1; fi
+if [ -z "$ARGUMENTS" ]; then echo "Usage: /continue-pr <pr-number> [--pi|--claude|--gemini]"; exit 1; fi
 
 bin/worktree prepare "$1" --pr
 ```
@@ -38,7 +38,7 @@ Wait for the operator to remove the label, then confirm. Once gone, proceed.
 **3. Launch the harness**
 
 ```bash
-bin/worktree harness "$1" ${2:---}
+bin/worktree harness "$1" ${2:---pi}
 ```
 
 **4. Print a confirmation**
