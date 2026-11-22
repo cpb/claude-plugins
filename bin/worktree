@@ -303,6 +303,62 @@ def pi_plan_mode_args
   end
 end
 
+PI_SHELL_COMMANDS = %w[zsh bash sh fish dash ksh tcsh csh -zsh -bash -sh -fish login].freeze
+PI_BOOT_TIMEOUT_SECONDS = 45
+
+def pi_pane_state(target)
+  capture, status = Open3.capture2("tmux capture-pane -t #{target.shellescape} -p")
+  return "dead" unless status.success?
+
+  foreground, = Open3.capture2("tmux display-message -p -t #{target.shellescape} '\#{pane_current_command}'")
+  return "no-agent" if PI_SHELL_COMMANDS.include?(foreground.strip) || foreground.strip.empty?
+  return "busy" if capture.match?(/Working/)
+  return "primed" if capture.match?(/↑\d/)
+
+  # Provider errors can leave a primed session without token counters. Any
+  # nonzero context percentage still proves that Pi accepted the prompt.
+  usage = capture.scan(/\b\d+(?:\.\d+)?%\//).last
+  return "unprimed" if usage == "0.0%/"
+  return "primed" if usage
+
+  "starting"
+end
+
+def wait_for_pi(target)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + PI_BOOT_TIMEOUT_SECONDS
+  loop do
+    state = pi_pane_state(target)
+    return state if %w[unprimed primed busy dead].include?(state)
+    return state if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+    sleep 2
+  end
+end
+
+def prime_pi(target, prompt_file)
+  state = wait_for_pi(target)
+  if %w[primed busy].include?(state)
+    puts "→ Pi accepted its launch prompt (#{state}); no priming paste needed"
+    return
+  end
+  unless state == "unprimed"
+    abort "ERROR: Pi did not reach a primable state in #{target} (last: #{state}); inspect the pane and retry"
+  end
+
+  puts "→ Priming Pi with #{prompt_file}..."
+  system("tmux load-buffer #{prompt_file.shellescape}") || abort("ERROR: tmux load-buffer failed")
+  system("tmux paste-buffer -p -t #{target.shellescape}") || abort("ERROR: tmux paste-buffer failed")
+  sleep 1
+  system("tmux send-keys -t #{target.shellescape} Enter") || abort("ERROR: tmux send-keys failed")
+  sleep 5
+
+  state = pi_pane_state(target)
+  if %w[unprimed no-agent starting dead].include?(state)
+    abort "ERROR: Pi is #{state} after the priming paste; inspect #{target}"
+  end
+  puts "→ Pi is primed (#{state})"
+end
+
 def cmd_harness(args)
   check_tmux
 
@@ -396,7 +452,8 @@ def cmd_harness(args)
   FileUtils.chmod(0755, launcher)
 
   puts "→ Launching in tmux window '#{target}' via #{launcher}"
-  system("tmux send-keys -t #{target.shellescape} #{"bash #{launcher}".shellescape} Enter")
+  system("tmux send-keys -t #{target.shellescape} #{"bash #{launcher}".shellescape} Enter") || abort("ERROR: tmux send-keys failed")
+  prime_pi(target, prompt_file) unless use_claude || use_gemini
 end
 
 def cmd_check_hill(args)

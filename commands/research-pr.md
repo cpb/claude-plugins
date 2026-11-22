@@ -1,6 +1,6 @@
 ---
 description: Prime a worktree for a research-and-planning session; spawn parallel research agents, gate plan agents on their output, and open a draft PR of terrain-map documents
-argument-hint: <issue-number> [--claude|--gemini]
+argument-hint: <issue-number> [--pi|--claude|--gemini]
 ---
 
 Set up an isolated worktree for issue $ARGUMENTS and launch Pi (Claude if --claude, Gemini if --gemini) in plan mode, primed with the issue description and a research-and-planning brief that instructs the orchestrator to fan out parallel research agents, gate plan agents on their output, and open a draft PR of hierarchical markdown artifacts.
@@ -11,7 +11,7 @@ Set up an isolated worktree for issue $ARGUMENTS and launch Pi (Claude if --clau
 
 ```bash
 if [ -z "$ARGUMENTS" ]; then
-  echo "Usage: /research-pr <issue-number> [--claude|--gemini]"
+  echo "Usage: /research-pr <issue-number> [--pi|--claude|--gemini]"
   exit 1
 fi
 ```
@@ -134,7 +134,7 @@ Note the `worktree_path`, `title`, `url`, and `remote_control` from the JSON out
 **3. Launch the harness**
 
 ```bash
-bin/worktree harness "$1" ${2:---}
+bin/worktree harness "$1" ${2:---pi}
 ```
 
 **4. Print a confirmation**

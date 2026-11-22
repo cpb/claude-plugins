@@ -137,7 +137,7 @@ Skills follow a two-step pattern:
 
 1. **`bin/worktree prepare <id>`** — fetches GitHub info, creates or locates the worktree, writes `.worktree-session.json` and `pr_context.md`, and prints session JSON.
 
-2. **`bin/worktree harness <id>`** — reads the session JSON, creates a tmux window in the worktree, writes a launcher script to `/tmp/harness-<rc>.sh`, and sends `bash /tmp/harness-<rc>.sh` to the window.
+2. **`bin/worktree harness <id>`** — reads the session JSON, creates a tmux window in the worktree, writes a launcher script to `/tmp/harness-<rc>.sh`, and sends `bash /tmp/harness-<rc>.sh` to the window. For Pi, it waits for the TUI, pastes the prompt file when Pi leaves the input empty, submits the paste, and verifies that the session is primed.
 
 Skills capture the prepare output into a shell variable so no `/tmp/*.json` intermediary is needed:
 
@@ -159,7 +159,7 @@ wt_path=$(echo "$session" | jq -r '.worktree_path')
 
 For issues, pi launches in plan mode: with `--plan` when the plan-mode extension is installed (recommended — on top of disabling `edit`/`write` it restricts bash to a read-only allowlist and adds a plan approval/execution flow; copy `examples/extensions/plan-mode/` from the pi npm package into `~/.pi/agent/extensions/`, auto-discovered globally), otherwise falling back to `--exclude-tools edit,write` — pi's mutating built-in tools are exactly `edit` and `write`, so excluding them is the equivalent of Claude's `--permission-mode plan` (Gemini uses `--approval-mode plan`). PR sessions launch without plan mode.
 
-The launcher script avoids quoting breakage: instead of inlining the prompt through `tmux send-keys` (which can break on backticks, newlines, and quotes), the full command is written to a bash script and only `bash /tmp/harness-<rc>.sh` is sent through tmux.
+The launcher script avoids quoting breakage: instead of inlining the prompt through `tmux send-keys` (which can break on backticks, newlines, and quotes), the full command is written to a bash script and only `bash /tmp/harness-<rc>.sh` is sent through tmux. Pi's automatic priming uses bracketed paste for the prompt file, so prompt newlines do not submit early.
 
 ## Worktree commands
 
@@ -171,7 +171,7 @@ All session-launching skills (`start-pr`, `continue-pr`, `research-pr`, `qa-pr-s
 
 1. **`bin/worktree prepare <id>`** — fetches GitHub info, creates the worktree, writes `pr_context.md` and `.worktree-session.json`, and prints a JSON object on stdout. Skills capture this with `session=$(bin/worktree prepare …)` and read fields with `jq -r '.<field>'`.
 
-2. **`bin/worktree harness <id> [flags]`** — finds or creates the tmux window, writes a `/tmp/harness-<rc>.sh` launcher script, and sends the script path via `tmux send-keys`. All flags:
+2. **`bin/worktree harness <id> [flags]`** — finds or creates the tmux window, writes a `/tmp/harness-<rc>.sh` launcher script, sends the script path via `tmux send-keys`, and primes Pi with the prompt file. All flags:
 
    | Flag | Default | Description |
    |---|---|---|
